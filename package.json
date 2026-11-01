@@ -1,0 +1,18 @@
+{
+  "name": "bence-internet",
+  "main": "index.html",
+  "window": {
+    "title": "Bence Internet",
+    "width": 1024,
+    "height": 768,
+    "icon": "icon.png"
+  },
+  "webview": {
+    "partitions": [
+      {
+        "name": "trusted",
+        "accessible_resources": [ "<all_urls>" ]
+      }
+    ]
+  }
+}

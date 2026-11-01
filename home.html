@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Bence Internet - Kezdőlap</title>
+    <style>
+        body { margin: 0; padding: 0; background-color: #ffffff; color: #202124; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+        .logo { font-size: 50px; font-weight: bold; color: #5f6368; margin-bottom: 30px; letter-spacing: -1px; }
+        .logo span { color: #8a2be2; }
+        .search-box { width: 50%; max-width: 550px; display: flex; align-items: center; background-color: #f1f3f4; border-radius: 24px; padding: 5px 15px; transition: all 0.2s; border: 1px solid transparent; }
+        .search-box:focus-within { background-color: #ffffff; box-shadow: 0 1px 6px rgba(32,33,36,0.28); border-color: #dfe1e5; }
+        .search-box input { flex: 1; border: none; background: transparent; padding: 10px; font-size: 16px; outline: none; color: #202124; }
+        .shortcuts { margin-top: 40px; display: flex; gap: 25px; }
+        .shortcut { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #202124; font-size: 13px; transition: 0.2s; cursor: pointer;}
+        .shortcut-icon { width: 48px; height: 48px; background-color: #f1f3f4; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 10px; transition: 0.2s; }
+        .shortcut:hover .shortcut-icon { background-color: #e8eaed; }
+    </style>
+</head>
+<body>
+    <div class="logo"><span>Bence</span> Internet</div>
+    
+    <form class="search-box" action="javascript:void(0);" onsubmit="doSearch(event)">
+        <span style="color: #9aa0a6;">🔍</span>
+        <input type="text" id="searchInput" placeholder="Keresés a Google-on..." required>
+    </form>
+
+    <div class="shortcuts">
+        <a class="shortcut" onclick="window.location.href='bence://youtube'">
+            <div class="shortcut-icon" style="color: #ff0000;">▶</div> YouTube
+        </a>
+        <a class="shortcut" onclick="window.location.href='bence://github'">
+            <div class="shortcut-icon" style="color: #333;">💻</div> GitHub
+        </a>
+        <a class="shortcut" onclick="window.location.href='bence://google'">
+            <div class="shortcut-icon" style="color: #4285f4;">🌐</div> Google
+        </a>
+    </div>
+
+    <script>
+        function doSearch(event) {
+            event.preventDefault();
+            let query = document.getElementById('searchInput').value.trim();
+            if (query) {
+                window.location.href = 'https://www.google.com/search?q=' + encodeURIComponent(query);
+            }
+        }
+    </script>
+</body>
+</html>

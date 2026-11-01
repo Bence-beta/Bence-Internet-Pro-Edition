@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Bence Internet</title>
+    <style>
+        body {
+            margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #ffffff; color: #333; display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+        }
+        
+        /* Fülsáv */
+        .tab-bar { 
+            background-color: #dee1e6; padding: 8px 10px 0 10px; display: flex; align-items: flex-end; gap: 5px; overflow-x: auto;
+        }
+        .tab { 
+            background-color: #ffffff; padding: 8px 15px; border-radius: 8px 8px 0 0; font-size: 13px; 
+            color: #333; display: flex; align-items: center; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            min-width: 150px; max-width: 200px; cursor: pointer;
+        }
+        .tab.active { background-color: #ffffff; font-weight: bold; }
+        .tab-title { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .tab-close { 
+            background: none; border: none; font-size: 16px; cursor: pointer; color: #888; 
+            border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
+        }
+        .tab-close:hover { background-color: #f1f3f4; color: #d32f2f; }
+        .new-tab-btn { 
+            background: none; border: none; font-size: 20px; cursor: pointer; color: #5f6368; 
+            padding: 0 10px; border-radius: 50%; margin-bottom: 2px;
+        }
+        .new-tab-btn:hover { background-color: #cfd3d8; }
+        
+        /* Navigációs sáv */
+        .navbar { background-color: #ffffff; padding: 8px 10px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #e0e0e0; position: relative; }
+        .nav-buttons { display: flex; gap: 5px; }
+        .navbar button { background: none; border: none; cursor: pointer; font-size: 18px; color: #5f6368; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
+        .navbar button:hover { background-color: #f1f3f4; }
+        
+        .address-bar { flex: 1; display: flex; align-items: center; background-color: #f1f3f4; border-radius: 20px; padding: 5px 15px; transition: all 0.2s; }
+        .address-bar:focus-within { background-color: #ffffff; box-shadow: 0 1px 5px rgba(0,0,0,0.2); border: 1px solid #8a2be2; }
+        .address-bar input { flex: 1; border: none; background: transparent; outline: none; font-size: 14px; color: #202124; padding: 5px; }
+
+        /* Könyvjelző sáv */
+        .bookmarks-bar { background-color: #ffffff; padding: 5px 15px; display: flex; gap: 15px; border-bottom: 1px solid #e0e0e0; font-size: 12px; }
+        .bookmark-item { text-decoration: none; color: #5f6368; display: flex; align-items: center; gap: 5px; padding: 4px 8px; border-radius: 4px; cursor: pointer; }
+        .bookmark-item:hover { background-color: #f1f3f4; color: #202124; }
+
+        .loading-bar { position: absolute; bottom: 0; left: 0; height: 3px; background-color: #8a2be2; width: 0%; transition: width 0.3s ease; opacity: 0; z-index: 10; }
+        
+        /* A webview-konténer, ami alatt a webview-k vannak */
+        .webview-container { flex: 1; position: relative; width: 100%; height: 100%; }
+        webview { width: 100%; height: 100%; border: none; background-color: #ffffff; display: none; }
+        webview.active { display: flex; }
+
+        /* Beállítások Menü */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background-color: #ffffff; border-radius: 10px; width: 400px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); font-size: 14px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;}
+        .modal-header h2 { margin: 0; font-size: 18px; color: #333; }
+        .close-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #888; }
+        .setting-item { margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .setting-item label { font-weight: bold; color: #555; }
+        .setting-item input[type="text"] { padding: 5px; border: 1px solid #ccc; border-radius: 5px; width: 200px; }
+        .about-text { color: #666; line-height: 1.5; }
+
+        /* Kereső ablak */
+        #findBox { display: none; position: absolute; top: 10px; right: 10px; background: white; padding: 10px; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 100; }
+        #findBox input { padding: 5px; border: 1px solid #ccc; border-radius: 3px; }
+        #findBox button { padding: 5px 10px; margin-left: 5px; background: #8a2be2; color: white; border: none; border-radius: 3px; cursor: pointer;}
+    </style>
+</head>
+<body>
+
+    <div class="tab-bar" id="tabBar">
+        <!-- A fülek ide fognak generálódni JavaScript-tel -->
+        <button class="new-tab-btn" onclick="createNewTab('home.html')" title="Új fül">+</button>
+    </div>
+
+    <div class="navbar">
+        <div class="nav-buttons">
+            <button onclick="goBack()" title="Vissza">&#8592;</button>
+            <button onclick="goForward()" title="Előre">&#8594;</button>
+            <button onclick="reloadPage()" title="Újratöltés">&#8635;</button>
+            <button onclick="goHome()" title="Kezdőlap">🏠</button>
+        </div>
+        
+        <div class="address-bar">
+            <span style="color: #5f6368; margin-right: 5px;">🔍</span>
+            <input type="text" id="urlInput" placeholder="Keress a Google-on vagy írj be egy URL-t..." onkeypress="handleKeyPress(event)">
+        </div>
+
+        <button onclick="toggleFullscreen()" title="Teljes képernyő">⛶</button>
+        <button onclick="openSettings()" title="Beállítások">⚙️</button>
+
+        <div class="loading-bar" id="loadingBar"></div>
+        
+        <div id="findBox">
+            <input type="text" id="findInput" placeholder="Keresés az oldalon...">
+            <button onclick="findInPage()">Keresés</button>
+            <button onclick="document.getElementById('findBox').style.display='none'">X</button>
+        </div>
+    </div>
+
+    <div class="bookmarks-bar">
+        <a class="bookmark-item" onclick="navigateActiveTab('https://www.youtube.com')">▶ YouTube</a>
+        <a class="bookmark-item" onclick="navigateActiveTab('https://github.com/Bence-beta')">💻 GitHub</a>
+        <a class="bookmark-item" onclick="navigateActiveTab('https://www.google.com')">🌐 Google</a>
+        <a class="bookmark-item" onclick="createNewTab('home.html')">🏠 Új Kezdőlap</a>
+    </div>
+
+    <!-- Itt vannak a webview-k -->
+    <div class="webview-container" id="webviewContainer"></div>
+
+    <!-- Beállítások Ablak -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ Beállítások</h2>
+                <button class="close-btn" onclick="closeSettings()">&times;</button>
+            </div>
+            <div class="setting-item">
+                <label>Kezdőlap URL:</label>
+                <input type="text" id="settingHome">
+            </div>
+            <div class="setting-item">
+                <label>Töltésjelző mutatása:</label>
+                <input type="checkbox" id="settingLoadingBar" checked>
+            </div>
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+            <div class="about-text">
+                <b>Bence Internet</b> Béta 1.2<br>
+                Készítette: Bence<br>
+                Motor: NW.js (Chromium)
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Állapotváltozók
+        let homePage = localStorage.getItem('benceHome') || 'home.html';
+        let showLoadingBar = localStorage.getItem('benceLoadingBar') !== 'false';
+        let tabs = []; // Ide kerülnek a fülek objektumai
+        let activeTabId = null;
+        let tabCounter = 0;
+
+        const tabBar = document.getElementById('tabBar');
+        const webviewContainer = document.getElementById('webviewContainer');
+        const urlInput = document.getElementById('urlInput');
+        const loadingBar = document.getElementById('loadingBar');
+
+        // Segédfüggvény az aktív webview eléréséhez
+        function getActiveWebview() {
+            if (!activeTabId) return null;
+            return document.getElementById(`webview-${activeTabId}`);
+        }
+
+        // Új fül létrehozása
+        function createNewTab(url = 'home.html') {
+            const tabId = ++tabCounter;
+            
+            // 1. Létrehozzuk a fül gombot
+            const tabElement = document.createElement('div');
+            tabElement.className = 'tab';
+            tabElement.id = `tab-${tabId}`;
+            tabElement.onclick = () => switchTab(tabId);
+            
+            const titleSpan = document.createElement('span');
+            titleSpan.className = 'tab-title';
+            titleSpan.innerText = 'Új fül';
+            
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'tab-close';
+            closeBtn.innerText = '×';
+            closeBtn.onclick = (e) => { e.stopPropagation(); closeTab(tabId); };
+
+            tabElement.appendChild(titleSpan);
+            tabElement.appendChild(closeBtn);
+            tabBar.insertBefore(tabElement, document.querySelector('.new-tab-btn'));
+
+            // 2. Létrehozzuk a hozzá tartozó webview-t
+            const webview = document.createElement('webview');
+            webview.id = `webview-${tabId}`;
+            webview.src = url;
+            webview.partition = 'trusted';
+            
+            // Események kezelése (töltésjelző, cím, stb.)
+            webview.addEventListener('loadstart', (e) => {
+                if (showLoadingBar) { loadingBar.style.width = '30%'; loadingBar.style.opacity = '1'; }
+                if (e.url.startsWith('bence://')) {
+                    webview.stop();
+                    let target = e.url.replace('bence://', '');
+                    if (target === 'youtube') webview.src = 'https://www.youtube.com';
+                    else if (target === 'github') webview.src = 'https://github.com/Bence-beta';
+                    else if (target === 'google') webview.src = 'https://www.google.com';
+                }
+            });
+
+            webview.addEventListener('loadstop', () => {
+                if (showLoadingBar) {
+                    loadingBar.style.width = '100%';
+                    setTimeout(() => { loadingBar.style.opacity = '0'; loadingBar.style.width = '0%'; }, 300);
+                }
+                // Cím frissítése, ha ez az aktív fül
+                if (activeTabId === tabId) {
+                    let currentUrl = webview.getURL();
+                    urlInput.value = (currentUrl !== homePage && currentUrl !== '') ? currentUrl : '';
+                    // Fül címe
+                    let title = webview.getTitle() || (currentUrl === homePage ? 'Kezdőlap' : currentUrl);
+                    titleSpan.innerText = title.substring(0, 15) + (title.length > 15 ? '...' : '');
+                }
+            });
+
+            webviewContainer.appendChild(webview);
+
+            // 3. Eltároljuk a fülek listájában
+            tabs.push({ id: tabId, element: tabElement, webview: webview });
+            
+            // 4. Aktívvá tesszük
+            switchTab(tabId);
+        }
+
+        // Fül váltása
+        function switchTab(tabId) {
+            activeTabId = tabId;
+            
+            // Összes fül és webview inaktív
+            tabs.forEach(tab => {
+                tab.element.classList.remove('active');
+                tab.webview.classList.remove('active');
+            });
+
+            // Kiválasztott aktív
+            const activeTab = tabs.find(t => t.id === tabId);
+            if (activeTab) {
+                activeTab.element.classList.add('active');
+                activeTab.webview.classList.add('active');
+                
+                let currentUrl = activeTab.webview.getURL();
+                urlInput.value = (currentUrl !== homePage && currentUrl !== '') ? currentUrl : '';
+            }
+        }
+
+        // Fül bezárása
+        function closeTab(tabId) {
+            const tabIndex = tabs.findIndex(t => t.id === tabId);
+            if (tabIndex === -1) return;
+
+            const tab = tabs[tabIndex];
+            tab.element.remove();
+            tab.webview.remove();
+            tabs.splice(tabIndex, 1);
+
+            // Ha az aktív fület zártuk be, váltsunk másikra
+            if (activeTabId === tabId) {
+                if (tabs.length > 0) {
+                    switchTab(tabs[Math.max(0, tabIndex - 1)].id);
+                } else {
+                    createNewTab('home.html'); // Ha nem maradt fül, nyissunk egy újat
+                }
+            }
+        }
+
+        // Aktív fül navigálása (pl. könyvjelzőről)
+        function navigateActiveTab(url) {
+            const webview = getActiveWebview();
+            if (webview) {
+                webview.src = url;
+            }
+        }
+
+        // Alapvető navigációs funkciók az aktív fülhöz
+        function goBack() { const wv = getActiveWebview(); if (wv) wv.back(); }
+        function goForward() { const wv = getActiveWebview(); if (wv) wv.forward(); }
+        function reloadPage() { const wv = getActiveWebview(); if (wv) wv.reload(); }
+        function goHome() { const wv = getActiveWebview(); if (wv) { wv.src = homePage; urlInput.value = ''; } }
+
+        function loadUrl() {
+            let input = urlInput.value.trim();
+            if (input === '') return;
+            if (!input.startsWith('http://') && !input.startsWith('https://') && !input.startsWith('bence://')) {
+                input = 'https://www.google.com/search?q=' + encodeURIComponent(input);
+            }
+            navigateActiveTab(input);
+        }
+
+        function handleKeyPress(event) { if (event.key === 'Enter') loadUrl(); }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(err => console.log(err));
+            else if (document.exitFullscreen) document.exitFullscreen();
+        }
+
+        // Beállítások
+        function openSettings() {
+            document.getElementById('settingsModal').style.display = 'flex';
+            document.getElementById('settingHome').value = homePage;
+            document.getElementById('settingLoadingBar').checked = showLoadingBar;
+        }
+
+        function closeSettings() {
+            document.getElementById('settingsModal').style.display = 'none';
+            homePage = document.getElementById('settingHome').value.trim();
+            showLoadingBar = document.getElementById('settingLoadingBar').checked;
+            localStorage.setItem('benceHome', homePage);
+            localStorage.setItem('benceLoadingBar', showLoadingBar);
+        }
+
+        function findInPage() {
+            let text = document.getElementById('findInput').value;
+            if (text) { const wv = getActiveWebview(); if (wv) wv.findInPage(text); }
+        }
+
+        // Gyorsgombok
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F5') { e.preventDefault(); reloadPage(); }
+            if (e.ctrlKey && e.key === 'l') { e.preventDefault(); urlInput.focus(); urlInput.select(); }
+            if (e.altKey && e.key === 'ArrowLeft') { e.preventDefault(); goBack(); }
+            if (e.altKey && e.key === 'ArrowRight') { e.preventDefault(); goForward(); }
+            if (e.ctrlKey && e.key === 'f') { 
+                e.preventDefault(); 
+                document.getElementById('findBox').style.display = 'block';
+                document.getElementById('findInput').focus();
+            }
+            // Új fül gyorsgomb (Ctrl + T)
+            if (e.ctrlKey && e.key === 't') {
+                e.preventDefault();
+                createNewTab('home.html');
+            }
+            // Fül bezárása gyorsgomb (Ctrl + W)
+            if (e.ctrlKey && e.key === 'w') {
+                e.preventDefault();
+                if (activeTabId) closeTab(activeTabId);
+            }
+        });
+
+        // Induláskor nyissunk egy fület a kezdőlappal
+        window.onload = () => {
+            createNewTab(homePage);
+        };
+    </script>
+</body>
+</html>
